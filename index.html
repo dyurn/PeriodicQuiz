@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Periodic Pro Quiz</title>
     
-    <!-- Tailwind Play CDN (Avertissement ignoré pour le prototypage rapide) -->
+    <!-- Tailwind Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -26,14 +26,9 @@
         }
     </style>
 
-    <!-- Babel pour compiler le TSX dans le navigateur -->
+    <!-- Babel pour compiler le TSX directement dans le navigateur -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <script>
-        // Sécurité pour process.env
-        window.process = { env: { API_KEY: "" } };
-    </script>
-
     <script type="importmap">
 {
   "imports": {
@@ -48,9 +43,10 @@
 <body>
     <div id="root"></div>
 
-    <!-- On utilise Babel pour charger et compiler index.tsx -->
-    <script type="text/babel" data-type="module">
-        import './index.tsx';
-    </script>
+    <!-- 
+      On utilise text/babel pour que Babel Standalone gère le fichier.
+      data-presets="react,typescript" est crucial pour le TSX.
+    -->
+    <script type="text/babel" data-presets="react,typescript" src="index.tsx"></script>
 </body>
 </html>
