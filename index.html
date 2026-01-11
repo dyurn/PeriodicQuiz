@@ -1,52 +1,330 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Periodic Pro Quiz</title>
+    <title>Periodic Master Pro</title>
     
     <!-- Tailwind Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <!-- Babel pour compiler le code React/TSX à la volée -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- React 18 UMD (Versions universelles pour éviter les problèmes de modules sur GitHub Pages) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
     
     <style type="text/tailwindcss">
         @layer base {
             body {
-                @apply bg-[#0f172a] text-slate-200 overflow-x-hidden;
+                @apply bg-[#0f172a] text-slate-200 overflow-x-hidden min-h-screen;
                 font-family: 'Inter', sans-serif;
             }
         }
         @layer components {
             .mono { font-family: 'JetBrains+Mono', monospace; }
             .glass {
-                @apply bg-slate-800/70 backdrop-blur-xl border border-white/10;
+                @apply bg-slate-800/60 backdrop-blur-xl border border-white/10;
+            }
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                @apply bg-transparent;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                @apply bg-slate-700 rounded-full;
             }
         }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
-
-    <!-- Babel pour compiler le TSX directement dans le navigateur -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom": "https://esm.sh/react-dom@19.0.0/client",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0"
-  }
-}
-</script>
 </head>
 <body>
     <div id="root"></div>
 
-    <!-- 
-      On utilise text/babel pour que Babel Standalone gère le fichier.
-      data-presets="react,typescript" est crucial pour le TSX.
-    -->
-    <script type="text/babel" data-presets="react,typescript" src="index.tsx"></script>
+    <script type="text/babel">
+        // Accès aux globals React (puisqu'on utilise les versions UMD)
+        const { useState, useEffect, useCallback, useMemo } = React;
+        const ReactDOMRoot = ReactDOM.createRoot(document.getElementById('root'));
+
+        // Polyfill basique pour l'API Key si elle manque
+        const API_KEY = (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : "";
+
+        // --- DATA ---
+        const ALL_ELEMENTS = [
+          { number: 1, symbol: "H", name: "Hydrogène", category: "nonmetal", color: "#3d82ed", row: 1, col: 1 },
+          { number: 2, symbol: "He", name: "Hélium", category: "noble-gas", color: "#7435e0", row: 1, col: 18 },
+          { number: 3, symbol: "Li", name: "Lithium", category: "alkali-metal", color: "#e83e35", row: 2, col: 1 },
+          { number: 4, symbol: "Be", name: "Béryllium", category: "alkaline-earth", color: "#e67e22", row: 2, col: 2 },
+          { number: 5, symbol: "B", name: "Bore", category: "metalloid", color: "#27ae60", row: 2, col: 13 },
+          { number: 6, symbol: "C", name: "Carbone", category: "nonmetal", color: "#3d82ed", row: 2, col: 14 },
+          { number: 7, symbol: "N", name: "Azote", category: "nonmetal", color: "#3d82ed", row: 2, col: 15 },
+          { number: 8, symbol: "O", name: "Oxygène", category: "nonmetal", color: "#3d82ed", row: 2, col: 16 },
+          { number: 9, symbol: "F", name: "Fluor", category: "halogen", color: "#f1c40f", row: 2, col: 17 },
+          { number: 10, symbol: "Ne", name: "Néon", category: "noble-gas", color: "#7435e0", row: 2, col: 18 },
+          { number: 11, symbol: "Na", name: "Sodium", category: "alkali-metal", color: "#e83e35", row: 3, col: 1 },
+          { number: 12, symbol: "Mg", name: "Magnésium", category: "alkaline-earth", color: "#e67e22", row: 3, col: 2 },
+          { number: 13, symbol: "Al", name: "Aluminium", category: "post-transition", color: "#95a5a6", row: 3, col: 13 },
+          { number: 14, symbol: "Si", name: "Silicium", category: "metalloid", color: "#27ae60", row: 3, col: 14 },
+          { number: 15, symbol: "P", name: "Phosphore", category: "nonmetal", color: "#3d82ed", row: 3, col: 15 },
+          { number: 16, symbol: "S", name: "Soufre", category: "nonmetal", color: "#3d82ed", row: 3, col: 16 },
+          { number: 17, symbol: "Cl", name: "Chlore", category: "halogen", color: "#f1c40f", row: 3, col: 17 },
+          { number: 18, symbol: "Ar", name: "Argon", category: "noble-gas", color: "#7435e0", row: 3, col: 18 },
+          { number: 19, symbol: "K", name: "Potassium", category: "alkali-metal", color: "#e83e35", row: 4, col: 1 },
+          { number: 20, symbol: "Ca", name: "Calcium", category: "alkaline-earth", color: "#e67e22", row: 4, col: 2 },
+          { number: 21, symbol: "Sc", name: "Scandium", category: "transition-metal", color: "#f39c12", row: 4, col: 3 },
+          { number: 22, symbol: "Ti", name: "Titane", category: "transition-metal", color: "#f39c12", row: 4, col: 4 },
+          { number: 23, symbol: "V", name: "Vanadium", category: "transition-metal", color: "#f39c12", row: 4, col: 5 },
+          { number: 24, symbol: "Cr", name: "Chrome", category: "transition-metal", color: "#f39c12", row: 4, col: 6 },
+          { number: 25, symbol: "Mn", name: "Manganèse", category: "transition-metal", color: "#f39c12", row: 4, col: 7 },
+          { number: 26, symbol: "Fe", name: "Fer", category: "transition-metal", color: "#f39c12", row: 4, col: 8 },
+          { number: 27, symbol: "Co", name: "Cobalt", category: "transition-metal", color: "#f39c12", row: 4, col: 9 },
+          { number: 28, symbol: "Ni", name: "Nickel", category: "transition-metal", color: "#f39c12", row: 4, col: 10 },
+          { number: 29, symbol: "Cu", name: "Cuivre", category: "transition-metal", color: "#f39c12", row: 4, col: 11 },
+          { number: 30, symbol: "Zn", name: "Zinc", category: "transition-metal", color: "#f39c12", row: 4, col: 12 },
+          { number: 31, symbol: "Ga", name: "Gallium", category: "post-transition", color: "#95a5a6", row: 4, col: 13 },
+          { number: 32, symbol: "Ge", name: "Germanium", category: "metalloid", color: "#27ae60", row: 4, col: 14 },
+          { number: 33, symbol: "As", name: "Arsenic", category: "metalloid", color: "#27ae60", row: 4, col: 15 },
+          { number: 34, symbol: "Se", name: "Sélénium", category: "nonmetal", color: "#3d82ed", row: 4, col: 16 },
+          { number: 35, symbol: "Br", name: "Brome", category: "halogen", color: "#f1c40f", row: 4, col: 17 },
+          { number: 36, symbol: "Kr", name: "Krypton", category: "noble-gas", color: "#7435e0", row: 4, col: 18 },
+          { number: 37, symbol: "Rb", name: "Rubidium", category: "alkali-metal", color: "#e83e35", row: 5, col: 1 },
+          { number: 38, symbol: "Sr", name: "Strontium", category: "alkaline-earth", color: "#e67e22", row: 5, col: 2 },
+          { number: 39, symbol: "Y", name: "Yttrium", category: "transition-metal", color: "#f39c12", row: 5, col: 3 },
+          { number: 40, symbol: "Zr", name: "Zirconium", category: "transition-metal", color: "#f39c12", row: 5, col: 4 },
+          { number: 41, symbol: "Nb", name: "Niobium", category: "transition-metal", color: "#f39c12", row: 5, col: 5 },
+          { number: 42, symbol: "Mo", name: "Molybdène", category: "transition-metal", color: "#f39c12", row: 5, col: 6 },
+          { number: 43, symbol: "Tc", name: "Technétium", category: "transition-metal", color: "#f39c12", row: 5, col: 7 },
+          { number: 44, symbol: "Ru", name: "Ruthénium", category: "transition-metal", color: "#f39c12", row: 5, col: 8 },
+          { number: 45, symbol: "Rh", name: "Rhodium", category: "transition-metal", color: "#f39c12", row: 5, col: 9 },
+          { number: 46, symbol: "Pd", name: "Palladium", category: "transition-metal", color: "#f39c12", row: 5, col: 10 },
+          { number: 47, symbol: "Ag", name: "Argent", category: "transition-metal", color: "#f39c12", row: 5, col: 11 },
+          { number: 48, symbol: "Cd", name: "Cadmium", category: "transition-metal", color: "#f39c12", row: 5, col: 12 },
+          { number: 49, symbol: "In", name: "Indium", category: "post-transition", color: "#95a5a6", row: 5, col: 13 },
+          { number: 50, symbol: "Sn", name: "Étain", category: "post-transition", color: "#95a5a6", row: 5, col: 14 },
+          { number: 51, symbol: "Sb", name: "Antimoine", category: "metalloid", color: "#27ae60", row: 5, col: 15 },
+          { number: 52, symbol: "Te", name: "Tellure", category: "metalloid", color: "#27ae60", row: 5, col: 16 },
+          { number: 53, symbol: "I", name: "Iode", category: "halogen", color: "#f1c40f", row: 5, col: 17 },
+          { number: 54, symbol: "Xe", name: "Xénon", category: "noble-gas", color: "#7435e0", row: 5, col: 18 },
+          { number: 55, symbol: "Cs", name: "Césium", category: "alkali-metal", color: "#e83e35", row: 6, col: 1 },
+          { number: 56, symbol: "Ba", name: "Baryum", category: "alkaline-earth", color: "#e67e22", row: 6, col: 2 },
+          { number: 57, symbol: "La", name: "Lanthane", category: "lanthanide", color: "#9b59b6", row: 9, col: 4 },
+          { number: 58, symbol: "Ce", name: "Cérium", category: "lanthanide", color: "#9b59b6", row: 9, col: 5 },
+          { number: 59, symbol: "Pr", name: "Praséodyme", category: "lanthanide", color: "#9b59b6", row: 9, col: 6 },
+          { number: 60, symbol: "Nd", name: "Néodyme", category: "lanthanide", color: "#9b59b6", row: 9, col: 7 },
+          { number: 61, symbol: "Pm", name: "Prométhium", category: "lanthanide", color: "#9b59b6", row: 9, col: 8 },
+          { number: 62, symbol: "Sm", name: "Samarium", category: "lanthanide", color: "#9b59b6", row: 9, col: 9 },
+          { number: 63, symbol: "Eu", name: "Europium", category: "lanthanide", color: "#9b59b6", row: 9, col: 10 },
+          { number: 64, symbol: "Gd", name: "Gadolinium", category: "lanthanide", color: "#9b59b6", row: 9, col: 11 },
+          { number: 65, symbol: "Tb", name: "Terbium", category: "lanthanide", color: "#9b59b6", row: 9, col: 12 },
+          { number: 66, symbol: "Dy", name: "Dysprosium", category: "lanthanide", color: "#9b59b6", row: 9, col: 13 },
+          { number: 67, symbol: "Ho", name: "Holmium", category: "lanthanide", color: "#9b59b6", row: 9, col: 14 },
+          { number: 68, symbol: "Er", name: "Erbium", category: "lanthanide", color: "#9b59b6", row: 9, col: 15 },
+          { number: 69, symbol: "Tm", name: "Thulium", category: "lanthanide", color: "#9b59b6", row: 9, col: 16 },
+          { number: 70, symbol: "Yb", name: "Ytterbium", category: "lanthanide", color: "#9b59b6", row: 9, col: 17 },
+          { number: 71, symbol: "Lu", name: "Lutécium", category: "lanthanide", color: "#9b59b6", row: 9, col: 18 },
+          { number: 72, symbol: "Hf", name: "Hafnium", category: "transition-metal", color: "#f39c12", row: 6, col: 4 },
+          { number: 73, symbol: "Ta", name: "Tantale", category: "transition-metal", color: "#f39c12", row: 6, col: 5 },
+          { number: 74, symbol: "W", name: "Tungstène", category: "transition-metal", color: "#f39c12", row: 6, col: 6 },
+          { number: 75, symbol: "Re", name: "Rhénium", category: "transition-metal", color: "#f39c12", row: 6, col: 7 },
+          { number: 76, symbol: "Os", name: "Osmium", category: "transition-metal", color: "#f39c12", row: 6, col: 8 },
+          { number: 77, symbol: "Ir", name: "Iridium", category: "transition-metal", color: "#f39c12", row: 6, col: 9 },
+          { number: 78, symbol: "Pt", name: "Platine", category: "transition-metal", color: "#f39c12", row: 6, col: 10 },
+          { number: 79, symbol: "Au", name: "Or", category: "transition-metal", color: "#f39c12", row: 6, col: 11 },
+          { number: 80, symbol: "Hg", name: "Mercure", category: "transition-metal", color: "#f39c12", row: 6, col: 12 },
+          { number: 81, symbol: "Tl", name: "Thallium", category: "post-transition", color: "#95a5a6", row: 6, col: 13 },
+          { number: 82, symbol: "Pb", name: "Plomb", category: "post-transition", color: "#95a5a6", row: 6, col: 14 },
+          { number: 83, symbol: "Bi", name: "Bismuth", category: "post-transition", color: "#95a5a6", row: 6, col: 15 },
+          { number: 84, symbol: "Po", name: "Polonium", category: "post-transition", color: "#95a5a6", row: 6, col: 16 },
+          { number: 85, symbol: "At", name: "Astate", category: "halogen", color: "#f1c40f", row: 6, col: 17 },
+          { number: 86, symbol: "Rn", name: "Radon", category: "noble-gas", color: "#7435e0", row: 6, col: 18 },
+          { number: 87, symbol: "Fr", name: "Francium", category: "alkali-metal", color: "#e83e35", row: 7, col: 1 },
+          { number: 88, symbol: "Ra", name: "Radium", category: "alkaline-earth", color: "#e67e22", row: 7, col: 2 },
+          { number: 89, symbol: "Ac", name: "Actinium", category: "actinide", color: "#c0392b", row: 10, col: 4 },
+          { number: 90, symbol: "Th", name: "Thorium", category: "actinide", color: "#c0392b", row: 10, col: 5 },
+          { number: 91, symbol: "Pa", name: "Protactinium", category: "actinide", color: "#c0392b", row: 10, col: 6 },
+          { number: 92, symbol: "U", name: "Uranium", category: "actinide", color: "#c0392b", row: 10, col: 7 },
+          { number: 93, symbol: "Np", name: "Neptunium", category: "actinide", color: "#c0392b", row: 10, col: 8 },
+          { number: 94, symbol: "Pu", name: "Plutonium", category: "actinide", color: "#c0392b", row: 10, col: 9 },
+          { number: 95, symbol: "Am", name: "Américium", category: "actinide", color: "#c0392b", row: 10, col: 10 },
+          { number: 96, symbol: "Cm", name: "Curium", category: "actinide", color: "#c0392b", row: 10, col: 11 },
+          { number: 97, symbol: "Bk", name: "Berkélium", category: "actinide", color: "#c0392b", row: 10, col: 12 },
+          { number: 98, symbol: "Cf", name: "Californium", category: "actinide", color: "#c0392b", row: 10, col: 13 },
+          { number: 99, symbol: "Es", name: "Einsteinium", category: "actinide", color: "#c0392b", row: 10, col: 14 },
+          { number: 100, symbol: "Fm", name: "Fermium", category: "actinide", color: "#c0392b", row: 10, col: 15 },
+          { number: 101, symbol: "Md", name: "Mendélévium", category: "actinide", color: "#c0392b", row: 10, col: 16 },
+          { number: 102, symbol: "No", name: "Nobélium", category: "actinide", color: "#c0392b", row: 10, col: 17 },
+          { number: 103, symbol: "Lr", name: "Lawrencium", category: "actinide", color: "#c0392b", row: 10, col: 18 },
+          { number: 104, symbol: "Rf", name: "Rutherfordium", category: "transition-metal", color: "#f39c12", row: 7, col: 4 },
+          { number: 105, symbol: "Db", name: "Dubnium", category: "transition-metal", color: "#f39c12", row: 7, col: 5 },
+          { number: 106, symbol: "Sg", name: "Seaborgium", category: "transition-metal", color: "#f39c12", row: 7, col: 6 },
+          { number: 107, symbol: "Bh", name: "Bohrium", category: "transition-metal", color: "#f39c12", row: 7, col: 7 },
+          { number: 108, symbol: "Hs", name: "Hassium", category: "transition-metal", color: "#f39c12", row: 7, col: 8 },
+          { number: 109, symbol: "Mt", name: "Meitnérium", category: "transition-metal", color: "#f39c12", row: 7, col: 9 },
+          { number: 110, symbol: "Ds", name: "Darmstadtium", category: "transition-metal", color: "#f39c12", row: 7, col: 10 },
+          { number: 111, symbol: "Rg", name: "Roentgenium", category: "transition-metal", color: "#f39c12", row: 7, col: 11 },
+          { number: 112, symbol: "Cn", name: "Copernicium", category: "transition-metal", color: "#f39c12", row: 7, col: 12 },
+          { number: 113, symbol: "Nh", name: "Nihonium", category: "post-transition", color: "#95a5a6", row: 7, col: 13 },
+          { number: 114, symbol: "Fl", name: "Flérovium", category: "post-transition", color: "#95a5a6", row: 7, col: 14 },
+          { number: 115, symbol: "Mc", name: "Moscovium", category: "post-transition", color: "#95a5a6", row: 7, col: 15 },
+          { number: 116, symbol: "Lv", name: "Livermorium", category: "post-transition", color: "#95a5a6", row: 7, col: 16 },
+          { number: 117, symbol: "Ts", name: "Tennesse", category: "halogen", color: "#f1c40f", row: 7, col: 17 },
+          { number: 118, symbol: "Og", name: "Oganesson", category: "noble-gas", color: "#7435e0", row: 7, col: 18 }
+        ];
+
+        // --- COMPONENTS ---
+
+        const RevisionView = () => {
+          const [selectedElement, setSelectedElement] = useState(null);
+          return (
+            <div className="flex flex-col items-center w-full max-w-5xl mx-auto animate-fade-in pb-20">
+              <div className="mb-6 text-center">
+                <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Tableau Périodique Interactif</h2>
+                <p className="text-slate-400 text-sm">Cliquez sur une case pour plus de détails</p>
+              </div>
+              <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
+                <div className="grid gap-1 min-w-[1000px] p-2 mx-auto" style={{ gridTemplateColumns: 'repeat(18, minmax(0, 1fr))', gridTemplateRows: 'repeat(10, minmax(0, 1fr))' }}>
+                  {ALL_ELEMENTS.map((el) => (
+                    <button
+                      key={el.number}
+                      onClick={() => setSelectedElement(el)}
+                      style={{ gridRow: el.row, gridColumn: el.col, backgroundColor: `${el.color}22`, borderColor: el.color }}
+                      className={`aspect-square flex flex-col items-center justify-center border rounded-md transition-all duration-200 hover:scale-125 hover:z-30 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)] hover:bg-white/10 ${selectedElement?.number === el.number ? 'scale-125 z-40 shadow-[0_0_20px_white/30] ring-1 ring-white bg-white/20' : ''}`}
+                    >
+                      <span className="text-[8px] mono opacity-80 leading-none mb-0.5">{el.number}</span>
+                      <span className="text-sm font-bold leading-none" style={{ color: el.color }}>{el.symbol}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="sticky bottom-4 w-full max-w-lg glass rounded-2xl p-6 flex items-center justify-center border border-white/10 shadow-2xl backdrop-blur-2xl">
+                {selectedElement ? (
+                  <div className="flex items-center gap-6 w-full animate-fade-in">
+                    <div className="w-16 h-16 shrink-0 rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg border-2 bg-white/5" style={{ borderColor: selectedElement.color, color: selectedElement.color }}>
+                      {selectedElement.symbol}
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-0.5 truncate">{selectedElement.category.replace('-', ' ')}</p>
+                      <h3 className="text-xl font-bold text-white truncate leading-tight">{selectedElement.name}</h3>
+                      <p className="text-slate-400 text-xs mt-0.5">Numéro Atomique: <span className="text-white font-bold mono ml-1">{selectedElement.number}</span></p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500 italic">Sélectionnez un élément ci-dessus</p>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        const QuizView = () => {
+          const [currentQuestion, setCurrentQuestion] = useState(null);
+          const [selectedOption, setSelectedOption] = useState(null);
+
+          const generateQuestion = useCallback(() => {
+            const types = ['NUMBER_TO_NAME', 'NAME_TO_NUMBER', 'SYMBOL_TO_BOTH'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const target = ALL_ELEMENTS[Math.floor(Math.random() * ALL_ELEMENTS.length)];
+            
+            const getOptionString = (el, qType) => {
+              if (qType === 'NUMBER_TO_NAME') return el.name;
+              if (qType === 'NAME_TO_NUMBER') return el.number.toString();
+              return `${el.name} (${el.number})`;
+            };
+
+            const correctAnswer = getOptionString(target, type);
+            const options = [correctAnswer];
+            while (options.length < 4) {
+              const randomEl = ALL_ELEMENTS[Math.floor(Math.random() * ALL_ELEMENTS.length)];
+              const opt = getOptionString(randomEl, type);
+              if (!options.includes(opt)) options.push(opt);
+            }
+
+            setCurrentQuestion({ type, targetElement: target, options: options.sort(() => Math.random() - 0.5), correctAnswer });
+            setSelectedOption(null);
+          }, []);
+
+          useEffect(() => { generateQuestion(); }, [generateQuestion]);
+
+          const handleOptionClick = (option) => {
+            if (selectedOption !== null) return;
+            setSelectedOption(option);
+          };
+
+          if (!currentQuestion) return null;
+
+          return (
+            <div className="max-w-2xl mx-auto glass p-8 rounded-3xl shadow-2xl animate-fade-in">
+              <div className="mb-10 text-center">
+                <span className="inline-block px-4 py-1.5 rounded-full bg-slate-800 text-[10px] font-bold text-blue-400 uppercase tracking-[0.25em] mb-6 border border-slate-700">Défi Infini</span>
+                <div className="min-h-[160px] flex flex-col items-center justify-center">
+                  {currentQuestion.type === 'NUMBER_TO_NAME' && (
+                    <div className="text-center">
+                      <p className="text-slate-400 mb-3 text-lg">Quel est le nom de l'élément numéro</p>
+                      <p className="text-8xl font-black mono text-white tracking-tighter">{currentQuestion.targetElement.number}</p>
+                    </div>
+                  )}
+                  {currentQuestion.type === 'NAME_TO_NUMBER' && (
+                    <div className="text-center">
+                      <p className="text-slate-400 mb-3 text-lg">Numéro atomique de l'élément</p>
+                      <p className="text-5xl sm:text-7xl font-bold text-white italic">{currentQuestion.targetElement.name}</p>
+                    </div>
+                  )}
+                  {currentQuestion.type === 'SYMBOL_TO_BOTH' && (
+                    <div className="flex flex-col items-center">
+                      <p className="text-slate-400 mb-6 text-lg">Nom et numéro pour le symbole</p>
+                      <div className="w-28 h-28 rounded-3xl flex items-center justify-center text-5xl font-bold shadow-2xl border-2 bg-white/5" style={{ borderColor: currentQuestion.targetElement.color, color: currentQuestion.targetElement.color }}>
+                        {currentQuestion.targetElement.symbol}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {currentQuestion.options.map((option, idx) => (
+                  <button key={idx} onClick={() => handleOptionClick(option)} disabled={selectedOption !== null}
+                    className={`p-6 rounded-2xl text-left transition-all duration-300 border shadow-sm text-lg font-medium
+                      ${selectedOption === null ? 'hover:bg-slate-700/50 border-white/5 bg-slate-800/40 hover:scale-[1.03] active:scale-95' : 'cursor-default'}
+                      ${selectedOption !== null && option === currentQuestion.correctAnswer ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : ''}
+                      ${selectedOption === option && option !== currentQuestion.correctAnswer ? 'bg-rose-500/20 border-rose-500 text-rose-300' : ''}
+                      ${selectedOption !== null && option !== currentQuestion.correctAnswer && option !== selectedOption ? 'opacity-20 scale-95' : ''}`}
+                  >{option}</button>
+                ))}
+              </div>
+              <div className="mt-10 min-h-[100px] flex flex-col items-center justify-center">
+                {selectedOption !== null && (
+                  <div className="text-center w-full animate-fade-in">
+                    <button onClick={generateQuestion} className="px-14 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-lg shadow-2xl uppercase tracking-widest transition-transform hover:scale-105 active:scale-95">Suivant</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        const App = () => {
+          const [activeTab, setActiveTab] = useState('quiz');
+          return (
+            <div className="min-h-screen flex flex-col items-center p-4">
+              <header className="mb-8 text-center mt-6">
+                <h1 className="text-3xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400 mb-6 tracking-tighter">Periodic Master</h1>
+                <div className="inline-flex p-1 bg-slate-900/60 backdrop-blur-2xl rounded-2xl border border-white/5 shadow-2xl">
+                  <button onClick={() => setActiveTab('quiz')} className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'quiz' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Quiz</button>
+                  <button onClick={() => setActiveTab('revision')} className={`px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'revision' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}>Tableau</button>
+                </div>
+              </header>
+              <main className="w-full">{activeTab === 'quiz' ? <QuizView /> : <RevisionView />}</main>
+              <footer className="mt-auto py-8 text-slate-500 text-[9px] uppercase tracking-[0.4em] opacity-40 font-bold text-center">118 Éléments • Pas de points • Savoir Infini</footer>
+            </div>
+          );
+        };
+
+        ReactDOMRoot.render(<App />);
+    </script>
 </body>
 </html>
