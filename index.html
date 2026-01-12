@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Periodic Master Pro</title>
+    <title>Periodic.Master</title>
     
+    <!-- Favicon Potion -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
+
     <!-- Tailwind Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -45,9 +48,60 @@
         }
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
         .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-slow { animation: float 10s ease-in-out infinite; }
         
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        /* Effet de remous (waves/swirl) constant */
+        @keyframes liquid-swirl {
+            0% { background-position: 0% 45%; }
+            50% { background-position: 100% 40%; }
+            100% { background-position: 0% 45%; }
+        }
+
+        @keyframes bubbles-move {
+            0% { transform: translateY(20px) scale(1); opacity: 0; }
+            20% { opacity: 0.6; }
+            80% { opacity: 0.6; }
+            100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        }
+
+        .liquid-text-animated {
+            background: linear-gradient(
+                110deg,
+                #1e3a8a 0%,
+                #3b82f6 25%,
+                #60a5fa 45%,
+                #ffffff 50%,
+                #60a5fa 55%,
+                #3b82f6 75%,
+                #1e3a8a 100%
+            );
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: liquid-swirl 8s ease-in-out infinite;
+            display: inline-block;
+            position: relative;
+        }
+
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: bubbles-move linear infinite;
+        }
+
+        .master-static {
+            @apply bg-clip-text text-transparent bg-gradient-to-br from-blue-400 via-blue-600 to-indigo-700;
+        }
 
         .bg-mesh {
             background-image: 
@@ -55,9 +109,28 @@
                 radial-gradient(at 100% 0%, hsla(210,100%,15%,1) 0, transparent 50%), 
                 radial-gradient(at 50% 100%, hsla(225,100%,5%,1) 0, transparent 50%);
         }
+
+        .bg-hex {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath fill='%23ffffff' fill-opacity='0.03' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.89v12.72l11 6.35 11-6.35V17.89L14 11.54 3 17.89z'/%3E%3C/svg%3E");
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
     </style>
 </head>
-<body class="bg-mesh">
+<body class="bg-mesh relative">
+    <div class="fixed inset-0 bg-hex opacity-50 pointer-events-none"></div>
+    
+    <!-- Floating Chemical Formulas (Background) -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden opacity-10 font-black mono text-2xl select-none">
+        <div class="absolute top-[15%] left-[10%] animate-float">H₂O</div>
+        <div class="absolute top-[40%] right-[15%] animate-float-slow" style="animation-delay: -2s">NaCl</div>
+        <div class="absolute bottom-[20%] left-[20%] animate-float" style="animation-delay: -4s">C₆H₁₂O₆</div>
+        <div class="absolute top-[60%] left-[5%] animate-float-slow">O₂</div>
+        <div class="absolute bottom-[10%] right-[10%] animate-float">CO₂</div>
+    </div>
+
     <div id="root"></div>
 
     <script type="text/babel">
@@ -67,17 +140,25 @@
         // --- COMPONENTS ---
 
         const Header = ({ onBack, isHome }) => (
-          <header className="w-full py-6 px-8 flex justify-between items-center z-50 animate-fade-in">
-            <div className="flex flex-col">
-              <h1 className="text-xl font-black tracking-tighter text-white">
-                PERIODIC<span className="text-blue-500 font-black">.</span>MASTER
-              </h1>
-              <div className="h-0.5 w-12 bg-blue-500 rounded-full mt-1"></div>
+          <header className="w-full py-6 px-8 flex justify-between items-center z-[100] animate-fade-in relative">
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={isHome ? null : onBack}>
+              <div className="text-2xl animate-pulse group-hover:scale-110 transition-transform">🧪</div>
+              <div className="flex flex-col items-start">
+                <div className="flex items-center gap-1">
+                  <span className="text-xl font-black tracking-tighter text-white leading-none">
+                    PERIODIC
+                  </span>
+                  <span className="text-xl font-black text-blue-500 animate-pulse">.</span>
+                  <span className="text-xl font-black tracking-tighter master-static leading-none">
+                    MASTER
+                  </span>
+                </div>
+              </div>
             </div>
             {!isHome && (
               <button 
                 onClick={onBack} 
-                className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/10 transition-all shadow-lg"
               >
                 <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                 Menu
@@ -88,25 +169,64 @@
 
         const MainMenu = ({ onSelectMode, highscore }) => {
           return (
-            <div className="flex flex-col items-center justify-center min-h-[70vh] w-full max-w-5xl mx-auto px-4 animate-slide-up">
-              <div className="text-center mb-16">
-                <div className="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 text-[10px] font-black text-blue-400 uppercase tracking-[0.4em] mb-6 border border-blue-500/20">
-                  Prêt pour l'examen ?
+            <div className="flex flex-col items-center justify-center min-h-[70vh] w-full max-w-5xl mx-auto px-4 animate-slide-up relative">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl opacity-10 pointer-events-none">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" className="animate-float-slow">
+                  <circle cx="100" cy="100" r="12" fill="#3b82f6" />
+                  <line x1="100" y1="100" x2="160" y2="100" stroke="white" strokeWidth="2" strokeDasharray="4 4" />
+                  <circle cx="160" cy="100" r="8" fill="#10b981" />
+                  <line x1="100" y1="100" x2="70" y2="150" stroke="white" strokeWidth="2" strokeDasharray="4 4" />
+                  <circle cx="70" cy="150" r="10" fill="#f59e0b" />
+                  <line x1="100" y1="100" x2="70" y2="50" stroke="white" strokeWidth="2" strokeDasharray="4 4" />
+                  <circle cx="70" cy="50" r="8" fill="#6366f1" />
+                </svg>
+              </div>
+
+              <div className="text-center mb-16 relative z-10 flex flex-col items-center">
+                <div className="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 text-[10px] font-black text-blue-400 uppercase tracking-[0.4em] mb-8 border border-blue-500/20">
+                  Tout savoir sur le Tableau périodique
                 </div>
-                <h2 className="text-5xl sm:text-7xl font-black tracking-tighter text-white mb-4">
-                  Periodic.Master
-                </h2>
+                
+                <div className="flex flex-col items-center group">
+                  <div className="flex items-center gap-1 sm:gap-4 flex-wrap justify-center relative">
+                    <span className="text-6xl sm:text-9xl font-black tracking-tighter text-white drop-shadow-2xl transition-transform group-hover:scale-[1.02] duration-500">
+                      PERIODIC
+                    </span>
+                    <span className="text-6xl sm:text-9xl font-black text-blue-500 text-glow animate-pulse">.</span>
+                    <div className="relative inline-block">
+                        <span className="text-6xl sm:text-9xl font-black tracking-tighter liquid-text-animated">
+                        MASTER
+                        </span>
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                            {[...Array(6)].map((_, i) => (
+                                <div 
+                                    key={i} 
+                                    className="bubble" 
+                                    style={{ 
+                                        left: `${Math.random() * 100}%`, 
+                                        width: `${2 + Math.random() * 6}px`, 
+                                        height: `${2 + Math.random() * 6}px`, 
+                                        animationDuration: `${3 + Math.random() * 4}s`,
+                                        animationDelay: `${Math.random() * 5}s`
+                                    }} 
+                                />
+                            ))}
+                        </div>
+                    </div>
+                  </div>
+                </div>
+
                 {highscore > 0 ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Votre record actuel</span>
-                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-sm font-black mono rounded-lg border border-emerald-500/20">{highscore}/15</span>
+                  <div className="mt-10 flex items-center justify-center gap-3 animate-fade-in group/score">
+                    <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px] group-hover/score:text-emerald-500 transition-colors">Record Atomique</span>
+                    <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-sm font-black mono rounded-xl border border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.15)] group-hover/score:scale-110 transition-all duration-300">{highscore}/15</span>
                   </div>
                 ) : (
-                  <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Choisissez un mode pour commencer</p>
+                  <p className="mt-10 text-slate-500 font-bold uppercase tracking-widest text-[10px] animate-pulse">Choisissez un mode pour commencer</p>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full relative z-10">
                 <button 
                   onClick={() => onSelectMode('game')}
                   className="btn-game group bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border-emerald-500/20 shadow-[0_0_50px_-15px_rgba(16,185,129,0.3)]"
@@ -126,7 +246,7 @@
                 >
                   <div className="flex flex-col items-start">
                     <span className="text-3xl">LIBRE</span>
-                    <span className="text-[10px] opacity-70 font-bold tracking-[0.2em]">QUESTIONS SANS FIN</span>
+                    <span className="text-[10px] opacity-70 font-bold tracking-[0.2em]">ENTRAINEMENT</span>
                   </div>
                   <div className="ml-auto opacity-40 group-hover:opacity-100 transition-all">
                     <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
@@ -138,8 +258,8 @@
                   className="btn-game group bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white border-indigo-500/20 shadow-[0_0_50px_-15px_rgba(79,70,229,0.3)]"
                 >
                   <div className="flex flex-col items-start">
-                    <span className="text-3xl">TABLEAU PERIODIQUE</span>
-                    <span className="text-[10px] opacity-70 font-bold tracking-[0.2em]">CONSULTER LES DONNÉES</span>
+                    <span className="text-3xl">TABLEAU</span>
+                    <span className="text-[10px] opacity-70 font-bold tracking-[0.2em]">REVISIONS</span>
                   </div>
                   <div className="ml-auto opacity-40 group-hover:opacity-100 transition-all">
                     <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
@@ -153,13 +273,13 @@
         const RevisionView = ({ elements }) => {
           const [selectedElement, setSelectedElement] = useState(null);
           return (
-            <div className="flex flex-col items-center w-full max-w-6xl mx-auto animate-fade-in pb-20 px-4">
+            <div className="flex flex-col items-center w-full max-w-6xl mx-auto animate-fade-in pb-20 px-4 relative min-h-[80vh]">
               <div className="w-full text-center mb-10">
                 <h3 className="text-xl font-black text-white uppercase tracking-widest">Tableau périodique des éléments</h3>
-                <p className="text-slate-500 text-[10px] font-bold mt-2 uppercase tracking-widest italic">Interagissez avec le tableau pour explorer</p>
+                <p className="text-slate-500 text-[10px] font-bold mt-2 uppercase tracking-widest italic opacity-60">Sélectionnez une particule pour analyse détaillée</p>
               </div>
 
-              <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
+              <div className="w-full overflow-x-auto pb-6 custom-scrollbar glass p-4 rounded-[2rem] border-white/5 relative">
                 <div className="grid gap-1.5 min-w-[1000px] p-2 mx-auto" style={{ gridTemplateColumns: 'repeat(18, minmax(0, 1fr))', gridTemplateRows: 'repeat(10, minmax(0, 1fr))' }}>
                   {elements.map((el) => (
                     <button
@@ -176,29 +296,36 @@
               </div>
 
               {selectedElement && (
-                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50 animate-slide-up">
-                  <div className="glass rounded-[2.5rem] p-10 flex items-center gap-10 border-white/10 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-700"></div>
-                    <div className="w-32 h-32 shrink-0 rounded-3xl flex items-center justify-center text-5xl font-black shadow-inner border-4 bg-white/5" style={{ borderColor: selectedElement.color, color: selectedElement.color }}>
+                <div 
+                  className="fixed inset-0 flex items-center justify-center z-[200] animate-fade-in px-4 pointer-events-none"
+                >
+                  <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm pointer-events-auto" onClick={() => setSelectedElement(null)}></div>
+                  <div className="glass rounded-[2rem] p-6 flex flex-col items-center gap-6 border-white/10 shadow-2xl relative overflow-hidden group max-w-sm w-full animate-slide-up pointer-events-auto">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-bl-full group-hover:scale-125 transition-transform duration-700"></div>
+                    
+                    <div className="w-20 h-20 shrink-0 rounded-2xl flex items-center justify-center text-3xl font-black shadow-inner border-4 bg-white/5 relative z-10" style={{ borderColor: selectedElement.color, color: selectedElement.color }}>
                       {selectedElement.symbol}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] uppercase tracking-[0.4em] text-slate-500 font-black mb-3">{selectedElement.category.replace('-', ' ')}</p>
-                      <h3 className="text-4xl font-black text-white truncate leading-tight mb-2 tracking-tighter">{selectedElement.name}</h3>
-                      <div className="flex gap-6 items-center">
+
+                    <div className="w-full text-center relative z-10">
+                      <p className="text-[9px] uppercase tracking-[0.4em] text-slate-500 font-black mb-1">{selectedElement.category.replace('-', ' ')}</p>
+                      <h3 className="text-2xl font-black text-white truncate leading-tight mb-4 tracking-tighter">{selectedElement.name}</h3>
+                      
+                      <div className="flex gap-8 items-center justify-center border-t border-white/10 pt-4">
                         <div className="flex flex-col">
                           <span className="text-[8px] uppercase tracking-widest text-slate-500 font-black">Numéro</span>
-                          <span className="text-white font-black mono text-xl">{selectedElement.number}</span>
+                          <span className="text-white font-black mono text-lg">{selectedElement.number}</span>
                         </div>
                         <div className="h-8 w-px bg-white/10"></div>
                         <div className="flex flex-col">
                           <span className="text-[8px] uppercase tracking-widest text-slate-500 font-black">Masse</span>
-                          <span className="text-slate-400 font-black mono text-xs italic">N/A</span>
+                          <span className="text-slate-400 font-black mono text-[10px] italic opacity-40 uppercase">A venir...</span>
                         </div>
                       </div>
                     </div>
-                    <button onClick={() => setSelectedElement(null)} className="absolute top-6 right-6 text-slate-600 hover:text-white transition-colors">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                    
+                    <button onClick={() => setSelectedElement(null)} className="absolute top-4 right-4 text-slate-600 hover:text-white transition-colors p-2 z-20">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   </div>
                 </div>
@@ -214,6 +341,8 @@
           const [score, setScore] = useState(0);
           const [timeLeft, setTimeLeft] = useState(8);
           const [isFinished, setIsFinished] = useState(false);
+          const [trainingCorrect, setTrainingCorrect] = useState(0);
+          const [trainingTotal, setTrainingTotal] = useState(0);
           const timerRef = useRef(null);
 
           const generateQuestion = useCallback(() => {
@@ -246,10 +375,16 @@
             if (selectedOption !== null || isFinished) return;
             clearInterval(timerRef.current);
             setSelectedOption(option);
-            if (option !== '__TIMEOUT__' && option === currentQuestion?.correctAnswer) {
-              setScore(prev => prev + 1);
+            
+            const isCorrect = option !== '__TIMEOUT__' && option === currentQuestion?.correctAnswer;
+
+            if (mode === 'game') {
+                if (isCorrect) setScore(prev => prev + 1);
+            } else {
+                setTrainingTotal(prev => prev + 1);
+                if (isCorrect) setTrainingCorrect(prev => prev + 1);
             }
-          }, [selectedOption, isFinished, currentQuestion]);
+          }, [selectedOption, isFinished, currentQuestion, mode]);
 
           useEffect(() => {
             if (mode === 'game' && !isFinished && selectedOption === null) {
@@ -281,21 +416,28 @@
             }
           };
 
+          const trainingAccuracy = trainingTotal > 0 ? (trainingCorrect / trainingTotal) * 100 : 0;
+          
+          const getGaugeColor = (pct) => {
+            if (pct < 40) return '#f43f5e';
+            if (pct < 70) return '#f59e0b';
+            return '#10b981';
+          };
+
           if (isFinished) {
-            const note = (score / 15) * 20;
             return (
-              <div className="max-w-md mx-auto glass p-12 rounded-[3rem] text-center animate-slide-up shadow-2xl mt-10 border-emerald-500/20">
+              <div className="max-w-md w-full mx-auto glass p-12 rounded-[3rem] text-center animate-slide-up shadow-2xl mt-10 border-emerald-500/20">
                 <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg className="w-10 h-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                 </div>
-                <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-tighter">Terminé !</h2>
+                <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-tighter">Bilan de Réaction</h2>
                 <div className="relative inline-block my-10">
                   <div className="text-8xl font-black text-emerald-500 mono drop-shadow-[0_0_30px_rgba(16,185,129,0.4)]">{score}/15</div>
-                  <div className="absolute -top-4 -right-8 bg-white text-slate-900 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-xl">{note.toFixed(1)}/20</div>
+                  <div className="absolute -top-4 -right-8 bg-white text-slate-900 text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-xl">{((score/15)*20).toFixed(1)}/20</div>
                 </div>
                 <div className="space-y-4">
-                  <button onClick={onBack} className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all shadow-emerald-900/20">Menu Principal</button>
-                  <button onClick={() => window.location.reload()} className="w-full py-5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest transition-all border border-white/10">Rejouer</button>
+                  <button onClick={onBack} className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all">Menu Principal</button>
+                  <button onClick={() => window.location.reload()} className="w-full py-5 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black uppercase tracking-widest transition-all border border-white/10">Nouveau Test</button>
                 </div>
               </div>
             );
@@ -304,76 +446,127 @@
           if (!currentQuestion) return null;
 
           return (
-            <div className={`max-w-2xl mx-auto glass rounded-[3rem] shadow-2xl animate-fade-in overflow-hidden mt-6 mb-20 border-t-2 ${mode === 'game' ? 'border-t-emerald-500/50' : 'border-t-orange-500/50'}`}>
-              {mode === 'game' && (
-                <div className="h-2 w-full bg-slate-900">
-                  <div className={`h-full transition-all duration-100 ease-linear ${timeLeft < 3 ? 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.5)]' : 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]'}`} style={{ width: `${(timeLeft / 8) * 100}%` }} />
+            <div className="relative w-full max-w-5xl mx-auto flex items-start justify-center px-4 sm:px-12 min-h-[700px]">
+              
+              {/* GAUGE PRÉCISION (TRAINING MODE) */}
+              {mode === 'training' && (
+                <div className="hidden lg:flex flex-col items-center mr-12 animate-fade-in group sticky top-40">
+                  <div className="h-[400px] w-4 glass rounded-full relative overflow-hidden flex flex-col justify-end border-white/10">
+                    <div 
+                      className="w-full transition-all duration-1000 ease-out relative" 
+                      style={{ 
+                        height: `${trainingAccuracy}%`, 
+                        backgroundColor: getGaugeColor(trainingAccuracy),
+                        boxShadow: `0 0 30px ${getGaugeColor(trainingAccuracy)}44`
+                      }} 
+                    >
+                      <div className="absolute top-0 left-0 w-full h-4 -translate-y-1/2 opacity-50 bg-white/30 blur-sm rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-col items-center">
+                    <span className="mono font-black text-xl mb-1" style={{ color: getGaugeColor(trainingAccuracy) }}>{Math.round(trainingAccuracy)}%</span>
+                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-slate-300 transition-colors">PRÉCISION</span>
+                    <div className="mt-2 text-[10px] font-bold text-slate-600 italic">{trainingCorrect}/{trainingTotal}</div>
+                  </div>
                 </div>
               )}
 
-              <div className="p-12">
-                <div className="flex justify-between items-center mb-16">
-                  <div className="px-5 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">
-                    {mode === 'game' ? `Phase ${qIndex + 1} / 15` : 'Module Libre'}
+              {/* CONTENEUR QCM STRICTEMENT STABILISÉ */}
+              <div className="w-full max-w-2xl min-h-[700px] flex flex-col glass rounded-[3rem] shadow-2xl animate-fade-in overflow-hidden border-t-2 border-white/10">
+                {mode === 'game' && (
+                  <div className="h-2 w-full bg-slate-900 shrink-0">
+                    <div className={`h-full transition-all duration-100 ease-linear ${timeLeft < 3 ? 'bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.5)]' : 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]'}`} style={{ width: `${(timeLeft / 8) * 100}%` }} />
                   </div>
-                  <div className="text-right min-w-[3rem] text-slate-500 text-[10px] font-black uppercase mono tracking-widest">
-                    {mode === 'game' && <span className="text-emerald-500">{score} </span>}
-                    {mode === 'game' ? 'POINTS' : 'SÉANCE LIBRE'}
+                )}
+
+                <div className="p-8 sm:p-12 relative flex-grow flex flex-col">
+                  {/* MOBILE GAUGE */}
+                  {mode === 'training' && (
+                    <div className="lg:hidden flex items-center justify-between mb-8 px-4 py-2 bg-white/5 rounded-2xl border border-white/5 animate-fade-in">
+                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Précision</span>
+                       <div className="flex items-center gap-3">
+                          <div className="h-1.5 w-24 bg-slate-800 rounded-full overflow-hidden">
+                             <div className="h-full transition-all duration-700" style={{ width: `${trainingAccuracy}%`, backgroundColor: getGaugeColor(trainingAccuracy) }}></div>
+                          </div>
+                          <span className="mono text-xs font-black" style={{ color: getGaugeColor(trainingAccuracy) }}>{Math.round(trainingAccuracy)}%</span>
+                       </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center mb-12 relative z-10 shrink-0">
+                    <div className="px-5 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">
+                      {mode === 'game' ? `Phase ${qIndex + 1} / 15` : 'ENTRAINEMENT'}
+                    </div>
+                    <div className="text-right min-w-[3rem] text-slate-500 text-[10px] font-black uppercase mono tracking-widest">
+                      {mode === 'game' ? <><span className="text-emerald-500">{score}</span> POINTS</> : 'MODE LIBRE'}
+                    </div>
                   </div>
-                </div>
 
-                <div className="min-h-[220px] flex flex-col items-center justify-center mb-16">
-                  {currentQuestion.type === 'NUMBER_TO_NAME' && (
-                    <div className="text-center group">
-                      <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] mb-6 opacity-60">Quelle est l'appellation du n°</p>
-                      <p className="text-9xl font-black mono text-white tracking-tighter drop-shadow-[0_0_40px_rgba(255,255,255,0.15)] group-hover:scale-110 transition-transform duration-500">{currentQuestion.targetElement.number}</p>
-                    </div>
-                  )}
-                  {currentQuestion.type === 'NAME_TO_NUMBER' && (
-                    <div className="text-center">
-                      <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] mb-8 opacity-60">Trouvez l'indice atomique de</p>
-                      <div className="flex items-center justify-center gap-8">
-                        <p className="text-5xl sm:text-7xl font-black text-white italic tracking-tighter drop-shadow-lg">{currentQuestion.targetElement.name}</p>
-                        <div className="w-24 h-24 rounded-[2rem] border-4 flex items-center justify-center text-4xl font-black bg-white/5 shadow-2xl" style={{ borderColor: currentQuestion.targetElement.color, color: currentQuestion.targetElement.color }}>{currentQuestion.targetElement.symbol}</div>
+                  {/* ZONE QUESTION : HAUTEUR FIXE POUR ÉVITER LES SAUTS */}
+                  <div className="h-[280px] flex flex-col items-center justify-center mb-10 relative z-10 w-full shrink-0">
+                    {currentQuestion.type === 'NUMBER_TO_NAME' && (
+                      <div className="text-center w-full group">
+                        <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] mb-6 opacity-60">Quelle particule possède le n°</p>
+                        <div className="flex items-center justify-center h-48">
+                            <p className="text-[10rem] sm:text-[12rem] font-black mono text-white leading-none tracking-tighter drop-shadow-[0_0_50px_rgba(255,255,255,0.2)]">
+                                {currentQuestion.targetElement.number}
+                            </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {currentQuestion.type === 'SYMBOL_TO_BOTH' && (
-                    <div className="flex flex-col items-center">
-                      <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] mb-10 opacity-60">Analyse de la particule</p>
-                      <div className="w-36 h-36 rounded-[2.5rem] flex items-center justify-center text-7xl font-black shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] border-4 bg-white/5" style={{ borderColor: currentQuestion.targetElement.color, color: currentQuestion.targetElement.color }}>
-                        {currentQuestion.targetElement.symbol}
+                    )}
+                    {currentQuestion.type === 'NAME_TO_NUMBER' && (
+                      <div className="text-center w-full">
+                        <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] mb-10 opacity-60">Quel est l'indice atomique de</p>
+                        <div className="flex flex-col items-center justify-center gap-6 h-48">
+                          <p className="text-5xl sm:text-7xl font-black text-white italic tracking-tighter drop-shadow-lg leading-none">
+                            {currentQuestion.targetElement.name}
+                          </p>
+                          <div className="w-20 h-20 rounded-2xl border-4 flex items-center justify-center text-3xl font-black bg-white/5 shadow-xl" style={{ borderColor: currentQuestion.targetElement.color, color: currentQuestion.targetElement.color }}>
+                            {currentQuestion.targetElement.symbol}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                    {currentQuestion.type === 'SYMBOL_TO_BOTH' && (
+                      <div className="flex flex-col items-center w-full">
+                        <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] mb-8 opacity-60">Désignation complète pour</p>
+                        <div className="flex items-center justify-center h-48">
+                            <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-[3rem] flex items-center justify-center text-7xl sm:text-8xl font-black shadow-[0_30px_70px_-20px_rgba(0,0,0,0.6)] border-4 bg-white/10" style={{ borderColor: currentQuestion.targetElement.color, color: currentQuestion.targetElement.color }}>
+                            {currentQuestion.targetElement.symbol}
+                            </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {currentQuestion.options.map((option, idx) => (
-                    <button 
-                      key={idx} 
-                      onClick={() => handleOptionClick(option)} 
-                      disabled={selectedOption !== null}
-                      className={`p-7 rounded-3xl text-left transition-all duration-300 border-2 font-black uppercase tracking-widest text-xs
-                        ${selectedOption === null ? 'hover:bg-blue-500/10 border-white/5 bg-slate-900/40 hover:border-blue-500/50 hover:scale-[1.03] active:scale-95' : 'cursor-default'}
-                        ${selectedOption !== null && option === currentQuestion.correctAnswer ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_40px_rgba(16,185,129,0.3)]' : ''}
-                        ${selectedOption === option && option !== currentQuestion.correctAnswer ? 'bg-rose-500/20 border-rose-500 text-rose-400' : ''}
-                        ${selectedOption !== null && option !== currentQuestion.correctAnswer && option !== selectedOption ? 'opacity-10 scale-95 blur-[2px]' : ''}`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-14 min-h-[90px] flex flex-col items-center justify-center">
-                  {selectedOption !== null && (
-                    <div className="text-center w-full animate-fade-in">
-                      {selectedOption === '__TIMEOUT__' && <div className="mb-6 text-rose-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">ALERTE : TEMPS ÉCOULÉ</div>}
-                      <button onClick={handleNext} className="px-20 py-5 bg-white text-slate-900 rounded-3xl font-black text-[10px] shadow-[0_20px_40px_-10px_rgba(255,255,255,0.2)] uppercase tracking-[0.4em] transition-all hover:scale-105 active:scale-95">
-                        {mode === 'game' && qIndex >= 14 ? 'Voir le bilan' : 'Étape suivante'}
+                  {/* GRILLE RÉPONSES : TAILLE FIXE DES BOUTONS */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10 shrink-0">
+                    {currentQuestion.options.map((option, idx) => (
+                      <button 
+                        key={idx} 
+                        onClick={() => handleOptionClick(option)} 
+                        disabled={selectedOption !== null}
+                        className={`p-6 rounded-[2rem] text-left transition-all duration-300 border-2 font-black uppercase tracking-widest text-[10px] sm:text-xs h-[84px] flex items-center justify-center text-center
+                          ${selectedOption === null ? 'hover:bg-blue-500/10 border-white/5 bg-slate-900/40 hover:border-blue-500/50 hover:scale-[1.02] active:scale-95' : 'cursor-default'}
+                          ${selectedOption !== null && option === currentQuestion.correctAnswer ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : ''}
+                          ${selectedOption === option && option !== currentQuestion.correctAnswer ? 'bg-rose-500/20 border-rose-500 text-rose-400' : ''}
+                          ${selectedOption !== null && option !== currentQuestion.correctAnswer && option !== selectedOption ? 'opacity-10 blur-[1px]' : ''}`}
+                      >
+                        <span className="w-full truncate">{option}</span>
                       </button>
-                    </div>
-                  )}
+                    ))}
+                  </div>
+
+                  <div className="mt-auto pt-10 min-h-[110px] flex flex-col items-center justify-center relative z-10 shrink-0">
+                    {selectedOption !== null && (
+                      <div className="text-center w-full animate-fade-in">
+                        {selectedOption === '__TIMEOUT__' && <div className="mb-4 text-rose-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">ALERTE : TEMPS DÉPASSÉ</div>}
+                        <button onClick={handleNext} className="px-20 py-5 bg-white text-slate-900 rounded-[2rem] font-black text-xs shadow-xl uppercase tracking-[0.4em] transition-all hover:scale-105 active:scale-95">
+                          {mode === 'game' && qIndex >= 14 ? 'VOIR LES RÉSULTATS' : 'QUESTION SUIVANTE'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -382,7 +575,7 @@
 
         // --- MAIN APP ---
         const App = () => {
-          const [view, setView] = useState('menu'); // menu, game, training, revision
+          const [view, setView] = useState('menu');
           const [elements, setElements] = useState([]);
           const [isLoading, setIsLoading] = useState(true);
           const [highscore, setHighscore] = useState(0);
@@ -393,7 +586,11 @@
 
             fetch('elements.json')
               .then(res => res.json())
-              .then(data => { setElements(data); setIsLoading(false); })
+              .then(data => { 
+                const cleanData = Array.isArray(data) ? data : (data.elements || []);
+                setElements(cleanData); 
+                setIsLoading(false); 
+              })
               .catch(() => setIsLoading(false));
           }, []);
 
@@ -406,24 +603,22 @@
 
           if (isLoading) {
             return (
-              <div className="min-h-screen flex flex-col items-center justify-center">
-                <div className="w-16 h-1 w-32 bg-slate-800 rounded-full overflow-hidden">
+              <div className="min-h-screen flex flex-col items-center justify-center bg-mesh">
+                <div className="text-6xl animate-bounce mb-4">🧪</div>
+                <div className="w-32 h-1 bg-slate-800 rounded-full overflow-hidden">
                   <div className="h-full bg-blue-500 animate-[loading_1.5s_infinite_ease-in-out]"></div>
                 </div>
-                <style>{`@keyframes loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }`}</style>
               </div>
             );
           }
 
           return (
-            <div className="min-h-screen relative flex flex-col">
+            <div className="min-h-screen relative flex flex-col z-10">
               <Header onBack={() => setView('menu')} isHome={view === 'menu'} />
               
-              <main className="relative z-10 w-full flex-grow">
+              <main className="relative z-10 w-full flex-grow flex items-center justify-center p-4">
                 {view === 'menu' && <MainMenu onSelectMode={setView} highscore={highscore} />}
-                
                 {view === 'revision' && <RevisionView elements={elements} />}
-                
                 {(view === 'game' || view === 'training') && (
                   <QuizView 
                     elements={elements} 
@@ -434,8 +629,8 @@
                 )}
               </main>
 
-              <footer className="w-full py-8 text-center pointer-events-none opacity-20">
-                <p className="text-[8px] font-black uppercase tracking-[1em] text-slate-400">118 Éléments • Engine v3.0 • Creative Minds</p>
+              <footer className="w-full py-8 text-center pointer-events-none opacity-20 relative z-20">
+                <p className="text-[8px] font-black uppercase tracking-[1em] text-slate-400">118 Éléments • Engine v3.6 • Chemistry & Logic</p>
               </footer>
             </div>
           );
@@ -443,5 +638,6 @@
 
         ReactDOMRoot.render(<App />);
     </script>
+    <style>@keyframes loading { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }</style>
 </body>
 </html>
